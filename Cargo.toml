@@ -1,0 +1,44 @@
+[package]
+name = "quasar-blas"
+version = "0.1.0"
+edition = "2024"
+description = "A heterogeneous, high-performance linear algebra engine targeting CPU (ARM Neon SIMD), GPU (wgpu/Metal/Vulkan), and embedded bare-metal runtimes."
+license = "MIT"
+rust-version = "1.94"
+
+[features]
+default = ["std"]
+std = []
+embedded = []         # Enables #![no_std] path, strips heap + OS dependencies
+gpu = ["dep:wgpu", "dep:pollster", "dep:bytemuck"]
+tui = ["dep:ratatui", "dep:crossterm", "dep:tokio"]
+
+[dependencies]
+# GPU tier (optional) — wgpu compute pipeline
+wgpu = { version = "24", optional = true }
+pollster = { version = "0.4", optional = true }
+bytemuck = { version = "1.21", features = ["derive"], optional = true }
+
+# TUI tier (optional) — ratatui interactive dashboard
+ratatui = { version = "0.30", optional = true }
+crossterm = { version = "0.28", optional = true }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"], optional = true }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1.6"
+ndarray = "0.16"
+approx = "0.5"
+
+[[bench]]
+name = "cpu_gemm"
+harness = false
+
+[[bench]]
+name = "gpu_gemm"
+harness = false
+required-features = ["gpu"]
+
+[[example]]
+name = "tui_dashboard"
+required-features = ["tui", "gpu"]
