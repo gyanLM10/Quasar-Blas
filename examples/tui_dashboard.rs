@@ -35,9 +35,7 @@ use quasar_blas::GemmEngine;
 use quasar_blas::cpu::{NaiveGemm, SimdGemm, TiledGemm};
 use quasar_blas::gpu::{GpuGemm, ShaderVariant};
 
-// ───────────────────────────── Types ─────────────────────────────
 
-/// Available GEMM engines.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum EngineType {
     CpuNaive,
@@ -77,7 +75,6 @@ impl EngineType {
     }
 }
 
-/// Result of a single benchmark run.
 #[derive(Debug, Clone)]
 struct BenchmarkResult {
     engine: EngineType,
@@ -86,29 +83,17 @@ struct BenchmarkResult {
     duration_us: u64,
 }
 
-/// Application state.
 struct App {
-    /// Current matrix size.
     size: usize,
-    /// Available sizes.
     sizes: Vec<usize>,
-    /// Current size index.
     size_index: usize,
-    /// Latest benchmark results per engine.
     results: Vec<BenchmarkResult>,
-    /// GFLOPS history (last 50 data points) for the sparkline.
     gflops_history: Vec<u64>,
-    /// Currently selected engine for single-engine mode.
     selected_engine: usize,
-    /// Whether a benchmark is running.
     running: bool,
-    /// Status message.
     status: String,
-    /// GPU adapter info.
     gpu_info: String,
-    /// Should the app exit?
     should_quit: bool,
-    /// Run all engines.
     run_all: bool,
 }
 

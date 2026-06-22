@@ -59,14 +59,12 @@ mod portable {
         ) -> Result<(), Self::Error> {
             validate_gemm_dims(m, k, n, lda, ldb, ldc, a.len(), b.len(), c.len())?;
 
-            // Zero the output matrix
             for i in 0..m {
                 for j in 0..n {
                     c[i * ldc + j] = 0.0;
                 }
             }
 
-            // Block loop: iterate over TILE-sized blocks
             let mut ii = 0;
             while ii < m {
                 let i_end = core::cmp::min(ii + TILE, m);
@@ -80,36 +78,24 @@ mod portable {
                         let j_end = core::cmp::min(jj + TILE, n);
                         let j_len = j_end - jj;
 
-                        // How many full SIMD vectors fit in this j-strip?
                         let j_simd_end = jj + (j_len / SIMD_LANES) * SIMD_LANES;
 
-                        // Micro-kernel with portable SIMD on the innermost j-loop
                         for i in ii..i_end {
                             for p in kk..k_end {
                                 let a_val = a[i * lda + p];
-
-                                // Broadcast A[i,p] to all 4 lanes
                                 let a_vec = f32x4::splat(a_val);
 
                                 let mut j = jj;
                                 while j < j_simd_end {
-                                    // Load 4 elements of B[p, j..j+4]
                                     let b_vec = f32x4::from_slice(&b[p * ldb + j..]);
-
-                                    // Load 4 elements of C[i, j..j+4]
                                     let c_vec = f32x4::from_slice(&c[i * ldc + j..]);
-
-                                    // FMA: c_vec = c_vec + a_vec * b_vec
-                                    // `mul_add` intrinsic ensures hardware FMA if available
                                     let result = a_vec.mul_add(b_vec, c_vec);
 
-                                    // Store back
                                     result.copy_to_slice(&mut c[i * ldc + j..i * ldc + j + SIMD_LANES]);
 
                                     j += SIMD_LANES;
                                 }
 
-                                // Scalar remainder for j values not aligned to SIMD width
                                 for j in j_simd_end..j_end {
                                     c[i * ldc + j] = a_val.mul_add(b[p * ldb + j], c[i * ldc + j]);
                                 }

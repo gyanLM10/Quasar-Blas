@@ -12,10 +12,8 @@ use criterion::{
 use quasar_blas::gpu::{GpuGemm, ShaderVariant};
 use quasar_blas::GemmEngine;
 
-/// Matrix sizes to benchmark on GPU.
 const SIZES: &[usize] = &[64, 128, 256, 512, 1024];
 
-/// Generate deterministic test data for a given matrix size.
 fn generate_matrix(rows: usize, cols: usize, seed: u64) -> Vec<f32> {
     (0..rows * cols)
         .map(|i| ((seed.wrapping_mul(i as u64 + 1).wrapping_add(7)) % 2000) as f32 / 100.0 - 10.0)
@@ -25,7 +23,6 @@ fn generate_matrix(rows: usize, cols: usize, seed: u64) -> Vec<f32> {
 fn bench_gpu_naive(c: &mut Criterion) {
     let mut group = c.benchmark_group("gpu_naive");
     
-    // Create the GPU engine once per group to avoid device initialization overhead
     let engine = GpuGemm::new(ShaderVariant::Naive);
 
     for &size in SIZES {
@@ -62,7 +59,6 @@ fn bench_gpu_naive(c: &mut Criterion) {
 fn bench_gpu_tiled(c: &mut Criterion) {
     let mut group = c.benchmark_group("gpu_tiled");
     
-    // Create the GPU engine once per group
     let engine = GpuGemm::new(ShaderVariant::Tiled);
 
     for &size in SIZES {

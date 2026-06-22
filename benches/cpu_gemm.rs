@@ -13,10 +13,8 @@ use criterion::{
 use quasar_blas::GemmEngine;
 use quasar_blas::cpu::{NaiveGemm, TiledGemm, SimdGemm};
 
-/// Matrix sizes to benchmark.
 const SIZES: &[usize] = &[64, 128, 256, 512, 1024];
 
-/// Generate deterministic test data for a given matrix size.
 fn generate_matrix(rows: usize, cols: usize, seed: u64) -> Vec<f32> {
     (0..rows * cols)
         .map(|i| ((seed.wrapping_mul(i as u64 + 1).wrapping_add(7)) % 2000) as f32 / 100.0 - 10.0)

@@ -34,20 +34,16 @@ impl<T: GemmElement> GemmEngine<T> for NaiveGemm {
     ) -> Result<(), Self::Error> {
         validate_gemm_dims(m, k, n, lda, ldb, ldc, a.len(), b.len(), c.len())?;
 
-        // Zero the output matrix
         for i in 0..m {
             for j in 0..n {
                 c[i * ldc + j] = T::zero();
             }
         }
 
-        // C[i][j] += A[i][p] * B[p][j]  for all p in 0..k
-        // Loop order: i → j → k (naive, cache-unfriendly for B)
         for i in 0..m {
             for j in 0..n {
                 let mut sum = T::zero();
                 for p in 0..k {
-                    // sum = A[i,p] * B[p,j] + sum
                     sum = a[i * lda + p].mul_add(b[p * ldb + j], sum);
                 }
                 c[i * ldc + j] = sum;
