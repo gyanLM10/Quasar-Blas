@@ -1,11 +1,11 @@
 //! # Quasar-BLAS
 //!
-//! A heterogeneous, high-performance linear algebra engine providing GEMM
-//! (General Matrix Multiply) across three hardware tiers:
+//! A high-performance CPU linear algebra engine providing GEMM
+//! (General Matrix Multiply) with three optimization tiers:
 //!
-//! - **Tier 1 (CPU)**: Cache-tiled, ARM Neon SIMD-accelerated kernels
-//! - **Tier 2 (GPU)**: wgpu compute shaders targeting Metal (macOS) and Vulkan (Linux)
-//! - **Tier 3 (Embedded)**: `no_std` bare-metal with INT8 quantized fixed-point arithmetic
+//! - **Naive**: Textbook O(N³) baseline for correctness validation
+//! - **Cache-Tiled**: Const-generic L1 cache blocking for spatial locality
+//! - **Portable SIMD**: Hardware-vectorized (Neon/AVX2) tiled kernels
 //!
 //! ## Architecture
 //!
@@ -14,26 +14,14 @@
 //! pass row-major or column-major data transparently.
 //!
 //! The trait is generic over [`GemmElement`], a sealed trait implemented for `f32`.
-//! The embedded tier extends this with a separate `i8` path.
 
 #![feature(portable_simd)]
-
-// When the `embedded` feature is active and `std` is not, compile as no_std.
-#![cfg_attr(all(feature = "embedded", not(feature = "std")), no_std)]
 
 // Re-export core types at crate root
 pub mod types;
 
-// CPU tier — always available
+// CPU tier — naive, cache-tiled, and SIMD engines
 pub mod cpu;
-
-// GPU tier — requires wgpu + pollster + bytemuck
-#[cfg(feature = "gpu")]
-pub mod gpu;
-
-// Embedded tier — no_std, no alloc, static allocation only
-#[cfg(feature = "embedded")]
-pub mod embedded;
 
 use types::GemmElement;
 
@@ -66,7 +54,7 @@ use types::GemmElement;
 /// A[i * lda + j]
 /// ```
 pub trait GemmEngine<T: GemmElement> {
-    /// Error type for this engine (e.g., dimension mismatch, GPU errors).
+    /// Error type for this engine (e.g., dimension mismatch).
     type Error: core::fmt::Debug;
 
     /// Perform General Matrix Multiply: `C = A × B`

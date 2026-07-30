@@ -15,8 +15,7 @@ use core::fmt;
 /// Trait bound for types that can participate in GEMM operations.
 ///
 /// This is a sealed trait — only types within this crate can implement it.
-/// Currently implemented for `f32`. The embedded tier extends GEMM to `i8`
-/// via a separate trait to keep the type constraints clean.
+/// Currently implemented for `f32`.
 ///
 /// # Zero-Cost Abstraction
 ///
@@ -58,16 +57,7 @@ impl GemmElement for f32 {
 
     #[inline(always)]
     fn mul_add(self, a: Self, b: Self) -> Self {
-        // In std builds, f32::mul_add uses the hardware FMA instruction.
-        // In no_std builds, we fall back to manual multiply-add.
-        #[cfg(feature = "std")]
-        {
-            f32::mul_add(self, a, b)
-        }
-        #[cfg(not(feature = "std"))]
-        {
-            (self * a) + b
-        }
+        f32::mul_add(self, a, b)
     }
 
     #[inline(always)]
@@ -245,9 +235,6 @@ impl Default for CacheBlock {
 /// 1. SIMD loads/stores never cross cache line boundaries (no split-line penalty)
 /// 2. Prefetch instructions bring in exactly the data we need
 /// 3. The CPU cache tiling algorithm operates on clean cache line boundaries
-///
-/// Only available with the `std` feature (heap allocation requires the allocator).
-#[cfg(feature = "std")]
 pub struct AlignedVec<T: GemmElement> {
     blocks: Vec<CacheBlock>,
     rows: usize,
@@ -257,7 +244,6 @@ pub struct AlignedVec<T: GemmElement> {
     _marker: core::marker::PhantomData<T>,
 }
 
-#[cfg(feature = "std")]
 impl<T: GemmElement> AlignedVec<T> {
     /// Create a new zero-initialized aligned matrix.
     ///
@@ -376,7 +362,6 @@ mod types_tests {
         ));
     }
 
-    #[cfg(feature = "std")]
     #[test]
     fn test_aligned_vec_alignment() {
         let mat = AlignedVec::<f32>::new(4, 4);

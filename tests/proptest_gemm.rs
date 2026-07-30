@@ -29,11 +29,6 @@ fn dim_strategy() -> impl Strategy<Value = (usize, usize)> {
     (1..=MAX_DIM, 1..=MAX_DIM)
 }
 
-/// Strategy to generate a flat f32 vector of given length with bounded values.
-fn matrix_data_strategy(len: usize) -> impl Strategy<Value = Vec<f32>> {
-    prop::collection::vec(-10.0f32..=10.0f32, len)
-}
-
 /// Helper: run GEMM on a given engine and compare against ndarray oracle.
 fn validate_against_oracle<E: GemmEngine<f32>>(
     engine: &E,
